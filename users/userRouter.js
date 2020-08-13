@@ -1,34 +1,128 @@
 const express = require('express');
 const user = require("../users/userDb")
+const post = require("../posts/postDb")
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
+router.use(express.json())
+
+
+router.post('/', validateUser, (req, res) => {
   // do your magic!
+  user.insert(req.body)
+    .then(post => {
+      res.status(201).json(post)
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({
+        message: "Could not add to database"
+      })
+    })
 });
 
-router.post('/:id/posts', (req, res) => {
+router.post('/:id/posts', validateUserId, validatePost, (req, res) => {
   // do your magic!
+  const id = req.params.id
+
+  post.insert(id)
+    .then(post => {
+      res.status(201).json(post)
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({
+        message: "Could not add post to database"
+      })
+    })
 });
 
 router.get('/', (req, res) => {
   // do your magic!
+  user.get(req.query)
+  .then(user => {
+    res.status(200).json(user)
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({
+      message: "Could not retrieve user from database"
+    })
+  })
 });
 
-router.get('/:id', (req, res) => {
+router.get('/:id', validateUserId, (req, res) => {
   // do your magic!
+  user.getById(req.params.id)
+    .then(user => {
+      res.status(200).json(user)
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({
+        message: "Could not retrieve user from ID"
+      })
+    })
 });
 
-router.get('/:id/posts', (req, res) => {
+router.get('/:id/posts', validateUserId, (req, res) => {
   // do your magic!
+  user.getUserPosts(req.params.id)
+  .then(post => {
+    if(post.length > 0) {
+    res.status(200).json(post)
+    } else {
+      res.status(404).json({
+        message: "No posts found for specified user"
+      })
+    }  
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({
+      message: "Could not retrieve post by user"
+    })
+  })
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', validateUserId, (req, res) => {
   // do your magic!
+  user.remove(req.params.id)
+  .then(count => {
+    if (count === 0) {
+      res.status(200).json(count)
+    } else {
+      res.status(400).json({
+        message: "User could not be found"
+      })
+    }
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({
+      message: "Could not delete specified user"
+    })
+  })
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', validateUserId, validateUser, (req, res) => {
   // do your magic!
+  user.update(req.params.id, req.body)
+    .then(user =>{
+      if(user) {
+        res.status(200).json(user)
+      } else {
+        res.status(404).json({
+          message: "User could not be found"
+        })
+      }
+    })
+    .catch(err =>{ 
+      console.log(err)
+      res.status(500).json({
+        message: "Could not retrieve updated user"
+      })
+    })
 });
 
 //custom middleware
